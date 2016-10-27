@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">EmpaLink Sample Project</string>
-    <string name="accel">Accelerometers</string>
+    <string name="accel">Accelerometers Overview</string>
     <string name="accel_x">x:</string>
     <string name="accel_y">y:</string>
     <string name="accel_z">z:</string>
