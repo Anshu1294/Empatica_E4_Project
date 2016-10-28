@@ -9,6 +9,7 @@ import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.RelativeLayout;
+import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -41,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
     private TextView statusLabel;
     private TextView deviceNameLabel;
     private RelativeLayout dataCnt;
+    private TabHost tabHost;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,6 +61,19 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         temperatureLabel = (TextView) findViewById(R.id.temperature);
         batteryLabel = (TextView) findViewById(R.id.battery);
         deviceNameLabel = (TextView) findViewById(R.id.deviceName);
+        tabHost = (TabHost) findViewById(R.id.tabMain);
+
+        tabHost.setup();
+
+        TabHost.TabSpec tabSpec = tabHost.newTabSpec("Data");
+        tabSpec.setContent(R.id.tabdata);
+        tabSpec.setIndicator("Data");
+        tabHost.addTab(tabSpec);
+
+        tabSpec = tabHost.newTabSpec("Graph");
+        tabSpec.setContent(R.id.tabGraph);
+        tabSpec.setIndicator("Graph");
+        tabHost.addTab(tabSpec);
 
         // Create a new EmpaDeviceManager. MainActivity is both its data and status delegate.
         deviceManager = new EmpaDeviceManager(getApplicationContext(), this, this);
