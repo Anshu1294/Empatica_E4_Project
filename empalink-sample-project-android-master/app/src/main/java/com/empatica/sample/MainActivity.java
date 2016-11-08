@@ -211,6 +211,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
 
     @Override
     public void onTabChanged(String s) {
-        Toast.makeText(getApplicationContext(), "To check for Display", Toast.LENGTH_LONG).show();
+        tabHost = (TabHost)findViewById(R.id.tabMain);
+        Toast.makeText(getApplicationContext(), tabHost.getCurrentTabTag(), Toast.LENGTH_LONG).show();
     }
 }
