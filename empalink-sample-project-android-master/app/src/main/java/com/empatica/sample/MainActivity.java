@@ -22,7 +22,7 @@ import com.empatica.empalink.delegate.EmpaDataDelegate;
 import com.empatica.empalink.delegate.EmpaStatusDelegate;
 
 
-public class MainActivity extends AppCompatActivity implements EmpaDataDelegate, EmpaStatusDelegate {
+public class MainActivity extends AppCompatActivity implements EmpaDataDelegate, EmpaStatusDelegate, TabHost.OnTabChangeListener {
 
     private static final int REQUEST_ENABLE_BT = 1;
     private static final long STREAMING_TIME = 100000; // Stops streaming 10 seconds after connection
@@ -74,13 +74,13 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         tabSpec.setContent(R.id.tabGraph);
         tabSpec.setIndicator("Graph");
         tabHost.addTab(tabSpec);
+        tabHost.setOnTabChangedListener(this);
 
         // Create a new EmpaDeviceManager. MainActivity is both its data and status delegate.
         deviceManager = new EmpaDeviceManager(getApplicationContext(), this, this);
         // Initialize the Device Manager using your API key. You need to have Internet access at this point.
         deviceManager.authenticateWithAPIKey(EMPATICA_API_KEY);
     }
-
     @Override
     protected void onPause() {
         super.onPause();
@@ -206,5 +206,11 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
                 label.setText(text);
             }
         });
+    }
+
+
+    @Override
+    public void onTabChanged(String s) {
+        Toast.makeText(getApplicationContext(), "To check for Display", Toast.LENGTH_LONG).show();
     }
 }
