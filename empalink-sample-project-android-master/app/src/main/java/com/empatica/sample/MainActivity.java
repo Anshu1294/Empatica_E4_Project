@@ -73,10 +73,10 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         tabHost = (TabHost) findViewById(R.id.tabMain);
         LayOutGraph = (RelativeLayout) findViewById(R.id.GraphLayout);
         mChart1 = new LineChart(this);
-        mChart1.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
         //endregion
 
         //region Setup Graph - mChart1
+        mChart1.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
         LayOutGraph.addView(mChart1);
         mChart1.setDescription("BVP Chart");
         mChart1.setNoDataTextDescription("No Data at the moment");
