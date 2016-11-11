@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
@@ -20,6 +21,11 @@ import com.empatica.empalink.config.EmpaSensorType;
 import com.empatica.empalink.config.EmpaStatus;
 import com.empatica.empalink.delegate.EmpaDataDelegate;
 import com.empatica.empalink.delegate.EmpaStatusDelegate;
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.LineData;
 
 
 public class MainActivity extends AppCompatActivity implements EmpaDataDelegate, EmpaStatusDelegate, TabHost.OnTabChangeListener {
@@ -43,6 +49,8 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
     private TextView deviceNameLabel;
     private RelativeLayout dataCnt;
     private TabHost tabHost;
+    private RelativeLayout LayOutGraph;
+    private LineChart mChart1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +58,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         setContentView(R.layout.activity_main);
 
         // Initialize vars that reference UI components
+        //region Declare UI Components
         statusLabel = (TextView) findViewById(R.id.status);
         dataCnt = (RelativeLayout) findViewById(R.id.dataArea);
         accel_xLabel = (TextView) findViewById(R.id.accel_x);
@@ -62,9 +71,53 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         batteryLabel = (TextView) findViewById(R.id.battery);
         deviceNameLabel = (TextView) findViewById(R.id.deviceName);
         tabHost = (TabHost) findViewById(R.id.tabMain);
+        LayOutGraph = (RelativeLayout) findViewById(R.id.GraphLayout);
+        mChart1 = new LineChart(this);
+        mChart1.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
+        //endregion
 
+        //region Setup Graph - mChart1
+        LayOutGraph.addView(mChart1);
+        mChart1.setDescription("BVP Chart");
+        mChart1.setNoDataTextDescription("No Data at the moment");
+        mChart1.setHighlightPerTapEnabled(true);
+        mChart1.setTouchEnabled(true);
+        mChart1.setDragEnabled(true);
+        mChart1.setScaleEnabled(true);
+        mChart1.setDrawGridBackground(false);
+
+        //enable pinch zoom to avoid scaling axis
+        mChart1.setPinchZoom(true);
+        //colour background
+        mChart1.setBackgroundColor(Color.GRAY);
+
+        LineData data = new LineData();
+        data.setValueTextColor(Color.WHITE);
+        mChart1.setData(data);
+
+        Legend L1 = mChart1.getLegend();
+        L1.setForm(Legend.LegendForm.LINE);
+        L1.setTextColor(Color.YELLOW);
+
+        XAxis x1 = mChart1.getXAxis();
+        x1.setTextColor(Color.WHITE);
+        x1.setDrawGridLines(false);
+        x1.setAvoidFirstLastClipping(true);
+
+        YAxis y1 = mChart1.getAxisLeft();
+        y1.setTextColor(Color.WHITE);
+        y1.setDrawGridLines(false);
+        //y1.setAxisMaxValue(120f);
+
+        YAxis y1_2 = mChart1.getAxisRight();
+        y1_2.setEnabled(false);
+
+
+
+        //endregion
+
+        //region Initialize Tabs
         tabHost.setup();
-
         TabHost.TabSpec tabSpec = tabHost.newTabSpec("Data");
         tabSpec.setContent(R.id.tabdata);
         tabSpec.setIndicator("Data");
@@ -75,17 +128,22 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         tabSpec.setIndicator("Graph");
         tabHost.addTab(tabSpec);
         tabHost.setOnTabChangedListener(this);
+        //endregion
 
+        //region Initialize EmapDeviceManager
         // Create a new EmpaDeviceManager. MainActivity is both its data and status delegate.
         deviceManager = new EmpaDeviceManager(getApplicationContext(), this, this);
         // Initialize the Device Manager using your API key. You need to have Internet access at this point.
         deviceManager.authenticateWithAPIKey(EMPATICA_API_KEY);
+        //endregion
     }
     @Override
     protected void onPause() {
         super.onPause();
         deviceManager.stopScanning();
     }
+
+
 
     @Override
     protected void onDestroy() {
