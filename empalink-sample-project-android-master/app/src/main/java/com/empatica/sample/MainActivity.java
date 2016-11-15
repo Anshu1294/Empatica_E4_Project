@@ -25,7 +25,11 @@ import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.Legend;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
+import com.github.mikephil.charting.utils.ColorTemplate;
 
 
 public class MainActivity extends AppCompatActivity implements EmpaDataDelegate, EmpaStatusDelegate, TabHost.OnTabChangeListener {
@@ -33,7 +37,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
     private static final int REQUEST_ENABLE_BT = 1;
     private static final long STREAMING_TIME = 100000; // Stops streaming 10 seconds after connection
 
-    private static final String EMPATICA_API_KEY = "1482f602113740c0aac7310e724e3a92";  // TODO insert your API Key heres
+    private static final String EMPATICA_API_KEY = "1482f602113740c0aac7310e724e3a92";  // TODO insert your API Key here
 
     private EmpaDeviceManager deviceManager;
 
@@ -84,35 +88,34 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         mChart1.setTouchEnabled(true);
         mChart1.setDragEnabled(true);
         mChart1.setScaleEnabled(true);
-        mChart1.setDrawGridBackground(false);
+        mChart1.setDrawGridBackground(true);
 
         //enable pinch zoom to avoid scaling axis
         mChart1.setPinchZoom(true);
         //colour background
         mChart1.setBackgroundColor(Color.GRAY);
 
-        LineData data = new LineData();
-        data.setValueTextColor(Color.WHITE);
-        mChart1.setData(data);
+        LineData data_G1 = new LineData();
+        data_G1.setValueTextColor(Color.WHITE);
+        mChart1.setData(data_G1);
 
         Legend L1 = mChart1.getLegend();
         L1.setForm(Legend.LegendForm.LINE);
-        L1.setTextColor(Color.YELLOW);
+        L1.setTextColor(Color.BLACK);
 
         XAxis x1 = mChart1.getXAxis();
-        x1.setTextColor(Color.WHITE);
+        x1.setTextColor(Color.BLACK);
         x1.setDrawGridLines(false);
         x1.setAvoidFirstLastClipping(true);
 
         YAxis y1 = mChart1.getAxisLeft();
-        y1.setTextColor(Color.WHITE);
-        y1.setDrawGridLines(false);
-        //y1.setAxisMaxValue(120f);
+        y1.setTextColor(Color.BLACK);
+        y1.setDrawGridLines(true);
+        y1.setAxisMaxValue(120f);
+        y1.setAxisMinValue(-120f);
 
         YAxis y1_2 = mChart1.getAxisRight();
         y1_2.setEnabled(false);
-
-
 
         //endregion
 
@@ -131,7 +134,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         //endregion
 
         //region Initialize EmapDeviceManager
-        // Create a new EmpaDeviceManager. MainActivity is both its data and status delegate.
+        // Create a new EmpaDeviceManager. MainActivity is both its data_G1 and status delegate.
         deviceManager = new EmpaDeviceManager(getApplicationContext(), this, this);
         // Initialize the Device Manager using your API key. You need to have Internet access at this point.
         deviceManager.authenticateWithAPIKey(EMPATICA_API_KEY);
@@ -234,7 +237,48 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
     @Override
     public void didReceiveBVP(float bvp, double timestamp) {
         updateLabel(bvpLabel, "" + bvp);
+
+        //region Set Chart 1 View
+        LineData data_G1 = mChart1.getData();
+        if (data_G1 != null)
+        {
+            LineDataSet set_g1 = (LineDataSet) data_G1.getDataSetByIndex(0);
+
+            if(set_g1 == null) {
+                set_g1 = CreateBVPSet();
+                data_G1.addDataSet(set_g1);
+            }
+
+            data_G1.addXValue("");
+            data_G1.addEntry(new Entry(bvp,set_g1.getEntryCount()),0);
+            //notify chart data has changed
+            mChart1.notifyDataSetChanged();
+            mChart1.setVisibleXRange(1,10);
+            mChart1.moveViewToX(data_G1.getXValCount() - 5);
+
+
+        }
+        //endregion
     }
+
+    private LineDataSet CreateBVPSet()
+    {
+        LineDataSet BVPGraph = new LineDataSet(null,"something"); 
+        BVPGraph.setDrawCubic(true);
+        BVPGraph.setCubicIntensity(0.2f);
+        BVPGraph.setAxisDependency(YAxis.AxisDependency.LEFT);
+        BVPGraph.setColor(ColorTemplate.getHoloBlue());
+        BVPGraph.setCircleColor(ColorTemplate.getHoloBlue());
+        BVPGraph.setLineWidth(1f);
+        BVPGraph.setFillAlpha(60);
+        BVPGraph.setFillColor(ColorTemplate.getHoloBlue());
+        BVPGraph.setHighLightColor(Color.rgb(244,177,177));
+        BVPGraph.setValueTextColor(Color.WHITE);
+        BVPGraph.setValueTextSize(7.5f);
+
+        return BVPGraph;
+    }
+
 
     @Override
     public void didReceiveBatteryLevel(float battery, double timestamp) {
