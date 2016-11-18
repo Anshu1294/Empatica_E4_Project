@@ -22,11 +22,16 @@
             android:layout_height="488dp"
             android:orientation="vertical">
 
+            <HorizontalScrollView android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:fillViewport="true"
+            android:scrollbars="none">
+
             <TabWidget
                 android:id="@android:id/tabs"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
-
+            </HorizontalScrollView>
             <FrameLayout
                 android:id="@android:id/tabcontent"
                 android:layout_width="match_parent"
@@ -197,11 +202,28 @@
                     <RelativeLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:id="@+id/GraphLayout"
+                        android:id="@+id/GraphLayout_BVP"
                         android:orientation="vertical">
 
                     </RelativeLayout>
+
                 </LinearLayout>
+                <!-- EDA GRAPH-->
+                <LinearLayout
+                    android:id="@+id/tabGraph2"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:id="@+id/GraphLayout_EDA"
+                        android:orientation="vertical">
+                    </RelativeLayout>
+                </LinearLayout>
+
+
 
             </FrameLayout>
         </LinearLayout>
