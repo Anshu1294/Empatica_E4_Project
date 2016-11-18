@@ -53,8 +53,10 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
     private TextView deviceNameLabel;
     private RelativeLayout dataCnt;
     private TabHost tabHost;
-    private RelativeLayout LayOutGraph;
+    private RelativeLayout LayOutGraph_BVP;
+    private RelativeLayout LayOutGraph_EDA;
     private LineChart mChart1;
+    private LineChart mChart2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,13 +77,17 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         batteryLabel = (TextView) findViewById(R.id.battery);
         deviceNameLabel = (TextView) findViewById(R.id.deviceName);
         tabHost = (TabHost) findViewById(R.id.tabMain);
-        LayOutGraph = (RelativeLayout) findViewById(R.id.GraphLayout);
+        LayOutGraph_BVP = (RelativeLayout) findViewById(R.id.GraphLayout_BVP);
+        LayOutGraph_EDA = (RelativeLayout) findViewById(R.id.GraphLayout_EDA);
         mChart1 = new LineChart(this);
+        mChart2 = new LineChart(this);
+
+        mChart1.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
+        mChart2.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
         //endregion
 
-        //region Setup Graph - mChart1
-        mChart1.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
-        LayOutGraph.addView(mChart1);
+        //region Setup Graph - mChart1 (BVP)
+        LayOutGraph_BVP.addView(mChart1);
         mChart1.setDescription("BVP Chart");
         mChart1.setNoDataTextDescription("No Data at the moment");
         mChart1.setHighlightPerTapEnabled(true);
@@ -99,24 +105,62 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         data_G1.setValueTextColor(Color.WHITE);
         mChart1.setData(data_G1);
 
-        Legend L1 = mChart1.getLegend();
-        L1.setForm(Legend.LegendForm.LINE);
-        L1.setTextColor(Color.BLACK);
+        Legend L1_G1 = mChart1.getLegend();
+        L1_G1.setForm(Legend.LegendForm.LINE);
+        L1_G1.setTextColor(Color.BLACK);
 
-        XAxis x1 = mChart1.getXAxis();
-        x1.setTextColor(Color.BLACK);
-        x1.setDrawGridLines(false);
-        x1.setAvoidFirstLastClipping(true);
+        XAxis x1_G1 = mChart1.getXAxis();
+        x1_G1.setTextColor(Color.BLACK);
+        x1_G1.setDrawGridLines(false);
+        x1_G1.setAvoidFirstLastClipping(true);
 
-        YAxis y1 = mChart1.getAxisLeft();
-        y1.setTextColor(Color.BLACK);
-        y1.setDrawGridLines(true);
-        y1.setAxisMaxValue(120f);
-        y1.setAxisMinValue(-120f);
+        YAxis y1_G1 = mChart1.getAxisLeft();
+        y1_G1.setTextColor(Color.BLACK);
+        y1_G1.setDrawGridLines(true);
+        y1_G1.setAxisMaxValue(120f);
+        y1_G1.setAxisMinValue(-120f);
 
-        YAxis y1_2 = mChart1.getAxisRight();
-        y1_2.setEnabled(false);
+        YAxis y1_2_G1 = mChart1.getAxisRight();
+        y1_2_G1.setEnabled(false);
 
+        //endregion
+
+        //region Setup Graph - mChart2 (EDA)
+        LayOutGraph_EDA.addView(mChart2);
+        mChart2.setDescription("EDA Chart");
+        mChart2.setNoDataTextDescription("No Data at the moment");
+        mChart2.setHighlightPerTapEnabled(true);
+        mChart2.setTouchEnabled(true);
+        mChart2.setDragEnabled(true);
+        mChart2.setScaleEnabled(true);
+        mChart2.setDrawGridBackground(true);
+
+        //enable pinch zoom to avoid scaling axis
+        mChart2.setPinchZoom(true);
+        //colour background
+        mChart2.setBackgroundColor(Color.GRAY);
+
+        LineData data_G2 = new LineData();
+        data_G2.setValueTextColor(Color.WHITE);
+        mChart2.setData(data_G2);
+
+        Legend L1_G2 = mChart2.getLegend();
+        L1_G2.setForm(Legend.LegendForm.LINE);
+        L1_G2.setTextColor(Color.BLACK);
+
+        XAxis x1_G2 = mChart2.getXAxis();
+        x1_G2.setTextColor(Color.BLACK);
+        x1_G2.setDrawGridLines(false);
+        x1_G2.setAvoidFirstLastClipping(true);
+
+        YAxis y1_G2 = mChart2.getAxisLeft();
+        y1_G2.setTextColor(Color.BLACK);
+        y1_G2.setDrawGridLines(true);
+        y1_G2.setAxisMaxValue(5f);
+        y1_G2.setAxisMinValue(-5f);
+
+        YAxis y1_2_G2 = mChart2.getAxisRight();
+        y1_2_G2.setEnabled(false);
         //endregion
 
         //region Initialize Tabs
@@ -126,10 +170,16 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         tabSpec.setIndicator("Data");
         tabHost.addTab(tabSpec);
 
-        tabSpec = tabHost.newTabSpec("Graph");
+        tabSpec = tabHost.newTabSpec("BVP Graph");
         tabSpec.setContent(R.id.tabGraph);
-        tabSpec.setIndicator("Graph");
+        tabSpec.setIndicator("BVP Graph");
         tabHost.addTab(tabSpec);
+
+        tabSpec = tabHost.newTabSpec("EDA Graph");
+        tabSpec.setContent(R.id.tabGraph2);
+        tabSpec.setIndicator("EDA Graph");
+        tabHost.addTab(tabSpec);
+
         tabHost.setOnTabChangedListener(this);
         //endregion
 
@@ -145,8 +195,6 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         super.onPause();
         deviceManager.stopScanning();
     }
-
-
 
     @Override
     protected void onDestroy() {
@@ -261,6 +309,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         //endregion
     }
 
+    //region CreateSets
     private LineDataSet CreateBVPSet()
     {
         LineDataSet BVPGraph = new LineDataSet(null,"something"); 
@@ -273,11 +322,30 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         BVPGraph.setFillAlpha(60);
         BVPGraph.setFillColor(ColorTemplate.getHoloBlue());
         BVPGraph.setHighLightColor(Color.rgb(244,177,177));
-        BVPGraph.setValueTextColor(Color.WHITE);
+        BVPGraph.setValueTextColor(Color.BLACK);
         BVPGraph.setValueTextSize(7.5f);
 
         return BVPGraph;
     }
+
+    private LineDataSet CreateEDASet()
+    {
+        LineDataSet EDAGraph = new LineDataSet(null,"something");
+        EDAGraph.setDrawCubic(true);
+        EDAGraph.setCubicIntensity(0.2f);
+        EDAGraph.setAxisDependency(YAxis.AxisDependency.LEFT);
+        EDAGraph.setColor(ColorTemplate.getHoloBlue());
+        EDAGraph.setCircleColor(ColorTemplate.getHoloBlue());
+        EDAGraph.setLineWidth(1f);
+        EDAGraph.setFillAlpha(60);
+        EDAGraph.setFillColor(ColorTemplate.getHoloBlue());
+        EDAGraph.setHighLightColor(Color.rgb(244,177,177));
+        EDAGraph.setValueTextColor(Color.BLACK);
+        EDAGraph.setValueTextSize(7.5f);
+
+        return EDAGraph;
+    }
+    //endregion
 
 
     @Override
@@ -287,7 +355,30 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
 
     @Override
     public void didReceiveGSR(float gsr, double timestamp) {
+
         updateLabel(edaLabel, "" + gsr);
+
+        //region Set Chart 2 View
+        LineData data_G2 = mChart2.getData();
+        if (data_G2 != null)
+        {
+            LineDataSet set_g2 = (LineDataSet) data_G2.getDataSetByIndex(0);
+
+            if(set_g2 == null) {
+                set_g2 = CreateEDASet();
+                data_G2.addDataSet(set_g2);
+            }
+
+            data_G2.addXValue("");
+            data_G2.addEntry(new Entry(gsr,set_g2.getEntryCount()),0);
+            //notify chart data has changed
+            mChart2.notifyDataSetChanged();
+            mChart2.setVisibleXRange(1,10);
+            mChart2.moveViewToX(data_G2.getXValCount() - 5);
+
+
+        }
+        //endregion
     }
 
     @Override
