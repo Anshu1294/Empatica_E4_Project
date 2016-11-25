@@ -222,7 +222,19 @@
                         android:orientation="vertical">
                     </RelativeLayout>
                 </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:id="@+id/tabHeartRate"
+                    android:orientation="vertical">
 
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:id="@+id/GraphLayout_HeartRate"
+                        android:orientation="vertical">
+                    </RelativeLayout>
+                </LinearLayout>
 
 
             </FrameLayout>

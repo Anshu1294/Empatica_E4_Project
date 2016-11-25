@@ -55,8 +55,12 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
     private TabHost tabHost;
     private RelativeLayout LayOutGraph_BVP;
     private RelativeLayout LayOutGraph_EDA;
+    private RelativeLayout LayoutGraph_HR;
     private LineChart mChart1;
     private LineChart mChart2;
+    private LineChart mChart3;
+    private float ibiData=0;
+    private float hrData =0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,11 +83,14 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         tabHost = (TabHost) findViewById(R.id.tabMain);
         LayOutGraph_BVP = (RelativeLayout) findViewById(R.id.GraphLayout_BVP);
         LayOutGraph_EDA = (RelativeLayout) findViewById(R.id.GraphLayout_EDA);
+        LayoutGraph_HR = (RelativeLayout) findViewById(R.id.GraphLayout_HeartRate);
         mChart1 = new LineChart(this);
         mChart2 = new LineChart(this);
+        mChart3 = new LineChart(this);
 
         mChart1.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
         mChart2.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
+        mChart3.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
         //endregion
 
         //region Setup Graph - mChart1 (BVP)
@@ -117,8 +124,8 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         YAxis y1_G1 = mChart1.getAxisLeft();
         y1_G1.setTextColor(Color.BLACK);
         y1_G1.setDrawGridLines(true);
-        y1_G1.setAxisMaxValue(120f);
-        y1_G1.setAxisMinValue(-120f);
+        y1_G1.setAxisMaxValue(60);
+        y1_G1.setAxisMinValue(-10);
 
         YAxis y1_2_G1 = mChart1.getAxisRight();
         y1_2_G1.setEnabled(false);
@@ -180,9 +187,51 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         tabSpec.setIndicator("EDA Graph");
         tabHost.addTab(tabSpec);
 
+        tabSpec = tabHost.newTabSpec("Heart Rate");
+        tabSpec.setContent(R.id.tabHeartRate);
+        tabSpec.setIndicator("Heart Rate Graph");
+        tabHost.addTab(tabSpec);
+
         tabHost.setOnTabChangedListener(this);
         //endregion
 
+        //region Setup Graph 3
+        LayoutGraph_HR.addView(mChart3);
+        mChart3.setDescription("HR Graph (BPM)");
+        mChart3.setNoDataTextDescription("Need To calculate");
+        mChart3.setHighlightPerTapEnabled(true);
+        mChart3.setTouchEnabled(true);
+        mChart3.setDragEnabled(true);
+        mChart3.setScaleEnabled(true);
+        mChart3.setDrawGridBackground(true);
+
+        //enable pinch zoom to avoid scaling axis
+        mChart3.setPinchZoom(true);
+        //colour background
+        mChart3.setBackgroundColor(Color.GRAY);
+
+        LineData data_G3 = new LineData();
+        data_G3.setValueTextColor(Color.WHITE);
+        mChart3.setData(data_G3);
+
+        Legend L1_G3 = mChart3.getLegend();
+        L1_G3.setForm(Legend.LegendForm.LINE);
+        L1_G3.setTextColor(Color.BLACK);
+
+        XAxis x1_G3 = mChart3.getXAxis();
+        x1_G3.setTextColor(Color.BLACK);
+        x1_G3.setDrawGridLines(false);
+        x1_G3.setAvoidFirstLastClipping(true);
+
+        YAxis y1_G3 = mChart2.getAxisLeft();
+        y1_G3.setTextColor(Color.BLACK);
+        y1_G3.setDrawGridLines(true);
+        y1_G3.setAxisMaxValue(60);
+        y1_G3.setAxisMinValue(220);
+
+        YAxis y1_2_G3 = mChart3.getAxisRight();
+        y1_2_G3.setEnabled(false);
+        //endregion
         //region Initialize EmapDeviceManager
         // Create a new EmpaDeviceManager. MainActivity is both its data_G1 and status delegate.
         deviceManager = new EmpaDeviceManager(getApplicationContext(), this, this);
@@ -285,6 +334,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
     @Override
     public void didReceiveBVP(float bvp, double timestamp) {
         updateLabel(bvpLabel, "" + bvp);
+        UpdateHRGraph(bvp,timestamp);
 
         //region Set Chart 1 View
         LineData data_G1 = mChart1.getData();
@@ -293,15 +343,17 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
             LineDataSet set_g1 = (LineDataSet) data_G1.getDataSetByIndex(0);
 
             if(set_g1 == null) {
+                // creation of data set if there is not data
                 set_g1 = CreateBVPSet();
                 data_G1.addDataSet(set_g1);
             }
-
+            // adding x value to the data set
             data_G1.addXValue("");
+            //adding new x value to the data set
             data_G1.addEntry(new Entry(bvp,set_g1.getEntryCount()),0);
             //notify chart data has changed
             mChart1.notifyDataSetChanged();
-            mChart1.setVisibleXRange(1,10);
+            mChart1.setVisibleXRange(1,120);
             mChart1.moveViewToX(data_G1.getXValCount() - 5);
 
 
@@ -309,7 +361,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         //endregion
     }
 
-    //region CreateSets
+        //region CreateSets
     private LineDataSet CreateBVPSet()
     {
         LineDataSet BVPGraph = new LineDataSet(null,"something"); 
@@ -345,7 +397,26 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
 
         return EDAGraph;
     }
+
+    private LineDataSet CreateHRset()
+    {
+        LineDataSet HRgraph = new LineDataSet(null,"something");
+        HRgraph.setDrawCubic(true); // sets drawing mode to cubic
+        HRgraph.setCubicIntensity(0.2f);
+        HRgraph.setAxisDependency(YAxis.AxisDependency.LEFT);
+        HRgraph.setColor(ColorTemplate.getHoloBlue());//setting the line color theme to blue
+        HRgraph.setCircleColor(ColorTemplate.getHoloBlue());// each plotting point color
+        HRgraph.setLineWidth(1f);
+        HRgraph.setFillAlpha(60);
+        HRgraph.setFillColor(ColorTemplate.getHoloBlue());// fill of the line
+        HRgraph.setHighLightColor(Color.rgb(244,177,177));
+        HRgraph.setValueTextColor(Color.BLACK);
+        HRgraph.setValueTextSize(7.5f);
+
+        return HRgraph;
+    }
     //endregion
+
 
 
     @Override
@@ -375,8 +446,6 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
             mChart2.notifyDataSetChanged();
             mChart2.setVisibleXRange(1,10);
             mChart2.moveViewToX(data_G2.getXValCount() - 5);
-
-
         }
         //endregion
     }
@@ -384,8 +453,38 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
     @Override
     public void didReceiveIBI(float ibi, double timestamp) {
         updateLabel(ibiLabel, "" + ibi);
+        ibiData = ibi;
+        hrData = ((1/ibi)*60);
     }
+    public void UpdateHRGraph(float rawBVPval, double timestamp)
+    {
+        // region set heart rate Values
+        LineData data_G3 = mChart3.getData();
+        if (data_G3 != null)
+        {
+            LineDataSet set_g3 = (LineDataSet) data_G3.getDataSetByIndex(0);
 
+            if(set_g3 == null)
+            {
+                //creation of data set if there is no data
+                set_g3 = CreateHRset();
+                data_G3.addDataSet(set_g3);
+            }
+
+            //add xvalue
+            data_G3.addXValue("");
+            data_G3.addEntry(new Entry(hrData,set_g3.getEntryCount()),0);
+            //notify chart has changed
+            mChart3.notifyDataSetChanged();
+            // range of numbers to be shown on the graph
+            mChart3.setVisibleXRange(1,100);
+            //keep scrolling in the x to the latest entry // why 5 though....
+            mChart3.moveViewToX(data_G3.getXValCount()-5);
+
+        }
+        //endregion
+
+    }
     @Override
     public void didReceiveTemperature(float temp, double timestamp) {
         updateLabel(temperatureLabel, "" + temp);
@@ -400,7 +499,6 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
             }
         });
     }
-
 
     @Override
     public void onTabChanged(String s) {
