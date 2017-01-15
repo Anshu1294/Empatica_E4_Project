@@ -45,6 +45,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
     private TextView accel_yLabel;
     private TextView accel_zLabel;
     private TextView bvpLabel;
+    private TextView bvpfilter;
     private TextView edaLabel;
     private TextView ibiLabel;
     private TextView temperatureLabel;
@@ -62,6 +63,12 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
     private float ibiData=0;
     private float hrData =0;
     private boolean ToastNow = false;
+    private int total_count = 0;
+    private int count = 0;
+    private float bvp_total = 0;
+    private float bvp_filtered = 0;
+    private float[] filtered_array;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +83,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         accel_yLabel = (TextView) findViewById(R.id.accel_y);
         accel_zLabel = (TextView) findViewById(R.id.accel_z);
         bvpLabel = (TextView) findViewById(R.id.bvp);
+        bvpfilter = (TextView) findViewById(R.id.bvpfiltered);
         edaLabel = (TextView) findViewById(R.id.eda);
         ibiLabel = (TextView) findViewById(R.id.ibi);
         temperatureLabel = (TextView) findViewById(R.id.temperature);
@@ -127,14 +135,13 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         YAxis y1_G1 = mChart1.getAxisLeft();
         y1_G1.setTextColor(Color.BLACK);
         y1_G1.setDrawGridLines(true);
-        y1_G1.setAxisMaxValue(60);
-        y1_G1.setAxisMinValue(-10);
+        y1_G1.setAxisMaxValue(80);
+        y1_G1.setAxisMinValue(-50);
 
         YAxis y1_2_G1 = mChart1.getAxisRight();
         y1_2_G1.setEnabled(false);
 
         //endregion
-
         //region Setup Graph - mChart2 (EDA)
         LayOutGraph_EDA.addView(mChart2);
         mChart2.setDescription("EDA Chart");
@@ -339,6 +346,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
     public void didReceiveBVP(float bvp, double timestamp) {
         updateLabel(bvpLabel, "" + bvp);
         UpdateHRGraph(bvp,timestamp);
+        filteredBVP(bvp,timestamp);
 
         //region Set Chart 1 View
         LineData data_G1 = mChart1.getData();
@@ -357,12 +365,24 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
             data_G1.addEntry(new Entry(bvp,set_g1.getEntryCount()),0);
             //notify chart data has changed
             mChart1.notifyDataSetChanged();
-            mChart1.setVisibleXRange(1,120);
+            mChart1.setVisibleXRange(1, 40);
             mChart1.moveViewToX(data_G1.getXValCount() - 5);
         }
         //endregion
     }
 
+    public void filteredBVP(float bvp, double timestamp) {
+        if (count < 10) {
+            bvp_total = bvp + bvp_total;
+            count+=1;
+        } else {
+            bvp_filtered = (bvp_total/10);
+            //filtered_array[total_count] = bvp_filtered;
+            //updateLabel(bvpLabel, "" + bvp_filtered);
+            total_count ++;
+            count = 0;
+        }
+    }
         //region CreateSets
     private LineDataSet CreateBVPSet()
     {

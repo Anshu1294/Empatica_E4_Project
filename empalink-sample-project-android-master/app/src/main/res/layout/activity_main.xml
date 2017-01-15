@@ -131,6 +131,21 @@
                             android:text="@string/emptyText"/>
 
                         <TextView
+                            android:id="@+id/bvpfiltered_label"
+                            android:layout_marginTop="10dp"
+                            android:layout_below="@id/accel_area"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/bvpfiltered_label" />
+
+                        <TextView
+                            android:layout_below="@id/bvpfiltered_label"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:id="@+id/bvpfiltered"
+                            android:text="@string/emptyText"/>
+
+                        <TextView
                             android:id="@+id/eda_label"
                             android:layout_marginTop="10dp"
                             android:layout_below="@id/bvp"
