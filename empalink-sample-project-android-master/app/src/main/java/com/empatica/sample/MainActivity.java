@@ -28,7 +28,6 @@ import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
-import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.github.mikephil.charting.utils.ColorTemplate;
 
 
@@ -57,9 +56,11 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
     private RelativeLayout LayOutGraph_EDA;
     private RelativeLayout LayOutGraph_BVP;
     private RelativeLayout LayoutGraph_HR;
+    private RelativeLayout LayoutGraph_IBI;
     private LineChart mChart1;
     private LineChart mChart2;
     private LineChart mChart3;
+    private LineChart mChart4;
     private float ibiData=0;
     private float hrData =0;
     private boolean ToastNow = false;
@@ -70,6 +71,8 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
     private float[] filtered_array;
 
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,12 +80,13 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
 
         // Initialize vars that reference UI components
         //region Declare UI Components
+
         statusLabel = (TextView) findViewById(R.id.status);
         dataCnt = (RelativeLayout) findViewById(R.id.dataArea);
         accel_xLabel = (TextView) findViewById(R.id.accel_x);
         accel_yLabel = (TextView) findViewById(R.id.accel_y);
         accel_zLabel = (TextView) findViewById(R.id.accel_z);
-        bvpLabel = (TextView) findViewById(R.id.bvp);
+        //bvpLabel = (TextView) findViewById(R.id.bvp);
         bvpfilter = (TextView) findViewById(R.id.bvpfiltered);
         edaLabel = (TextView) findViewById(R.id.eda);
         ibiLabel = (TextView) findViewById(R.id.ibi);
@@ -94,14 +98,17 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         LayOutGraph_BVP = (RelativeLayout) findViewById(R.id.GraphLayout_BVP);
         LayOutGraph_EDA = (RelativeLayout) findViewById(R.id.GraphLayout_EDA);
         LayoutGraph_HR = (RelativeLayout) findViewById(R.id.GraphLayout_HeartRate);
+        LayoutGraph_IBI = (RelativeLayout) findViewById(R.id.GraphLayout_IBI);
 
         mChart1 = new LineChart(this);
         mChart2 = new LineChart(this);
         mChart3 = new LineChart(this);
+        mChart4 = new LineChart(this);
 
         mChart1.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
         mChart2.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
         mChart3.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
+        mChart4.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
         //endregion
 
         //region Setup Graph - mChart1 (BVP)
@@ -179,8 +186,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         YAxis y1_2_G2 = mChart2.getAxisRight();
         y1_2_G2.setEnabled(false);
         //endregion
-
-        //region Setup Graph 3
+        //region Setup Graph - mChart3 (HR)
         LayoutGraph_HR.addView(mChart3);
         mChart3.setDescription("HR Chart");
         mChart3.setNoDataTextDescription("No Calculations at the moment");
@@ -216,6 +222,43 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
 
         YAxis y1_2_G3 = mChart3.getAxisRight();
         y1_2_G3.setEnabled(false);
+        //endregion -
+        //region Setup Graph - mChart4 (IBI)
+        LayoutGraph_IBI.addView(mChart4);
+        mChart4.setDescription("IBI Chart");
+        mChart4.setNoDataTextDescription("No Calculations at the moment");
+        mChart4.setHighlightPerTapEnabled(true);
+        mChart4.setTouchEnabled(true);
+        mChart4.setDragEnabled(true);
+        mChart4.setScaleEnabled(true);
+        mChart4.setDrawGridBackground(true);
+
+        //enable pinch zoom to avoid scaling axis
+        mChart4.setPinchZoom(true);
+        //colour background
+        mChart4.setBackgroundColor(Color.GRAY);
+
+        LineData data_G4 = new LineData();
+        data_G4.setValueTextColor(Color.WHITE);
+        mChart4.setData(data_G4);
+
+        Legend L1_G4 = mChart4.getLegend();
+        L1_G4.setForm(Legend.LegendForm.LINE);
+        L1_G4.setTextColor(Color.BLACK);
+
+        XAxis x1_G4 = mChart4.getXAxis();
+        x1_G4.setTextColor(Color.BLACK);
+        x1_G4.setDrawGridLines(true);
+        x1_G4.setAvoidFirstLastClipping(true);
+
+        YAxis y1_G4 = mChart4.getAxisLeft();
+        y1_G4.setTextColor(Color.BLACK);
+        y1_G4.setDrawGridLines(true);
+        y1_G4.setAxisMaxValue(10);
+        y1_G4.setAxisMinValue(-10);
+
+        YAxis y1_2_G4 = mChart4.getAxisRight();
+        y1_2_G4.setEnabled(false);
         //endregion
 
         //region Initialize Tabs
@@ -238,6 +281,11 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         tabSpec = tabHost.newTabSpec("Heart Rate");
         tabSpec.setContent(R.id.tabHeartRate);
         tabSpec.setIndicator("Heart Rate");
+        tabHost.addTab(tabSpec);
+
+        tabSpec = tabHost.newTabSpec("IBI");
+        tabSpec.setContent(R.id.tabIBI);
+        tabSpec.setIndicator("IBI");
         tabHost.addTab(tabSpec);
 
         tabHost.setOnTabChangedListener(this);
@@ -344,7 +392,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
 
     @Override
     public void didReceiveBVP(float bvp, double timestamp) {
-        updateLabel(bvpLabel, "" + bvp);
+        updateLabel(bvpfilter, "" + bvp);
         UpdateHRGraph(bvp,timestamp);
         filteredBVP(bvp,timestamp);
 
@@ -437,9 +485,25 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
 
         return HRgraph;
     }
+
+    private LineDataSet CreateIBIset()
+    {
+        LineDataSet IBIgraph = new LineDataSet(null, "IBI");
+        IBIgraph.setDrawCubic(true); //cubic drawing mode
+        IBIgraph.setCubicIntensity(0.2f);
+        IBIgraph.setAxisDependency(YAxis.AxisDependency.LEFT);
+        IBIgraph.setColor(ColorTemplate.getHoloBlue());//setting the line color theme to blue
+        IBIgraph.setCircleColor(ColorTemplate.getHoloBlue());// each plotting point color
+        IBIgraph.setLineWidth(1f);
+        IBIgraph.setFillAlpha(60);
+        IBIgraph.setFillColor(ColorTemplate.getHoloBlue());// fill of the line
+        IBIgraph.setHighLightColor(Color.rgb(244,177,177));
+        IBIgraph.setValueTextColor(Color.BLACK);
+        IBIgraph.setValueTextSize(7.5f);
+
+        return IBIgraph;
+    }
     //endregion
-
-
 
     @Override
     public void didReceiveBatteryLevel(float battery, double timestamp) {
@@ -470,7 +534,6 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
             mChart2.moveViewToX(data_G2.getXValCount() - 5);
         }
         //endregion
-
     }
 
     @Override
@@ -478,22 +541,41 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         updateLabel(ibiLabel, "" + ibi);
         ibiData = ibi;
         hrData = ((1/ibi)*60);
+
+        LineData data_G4 = mChart4.getData();
+        if (data_G4 != null)
+        {
+            LineDataSet set_g4 = (LineDataSet) data_G4.getDataSetByIndex(0);
+
+            if(set_g4 == null) {
+                // creation of data set if there is not data
+                set_g4 = CreateIBIset();
+                data_G4.addDataSet(set_g4);
+            }
+            // adding x value to the data set
+            data_G4.addXValue("");
+            //adding new x value to the data set
+            data_G4.addEntry(new Entry(ibi,set_g4.getEntryCount()),0);
+            //notify chart data has changed
+            mChart4.notifyDataSetChanged();
+            mChart4.setVisibleXRange(1,20);
+            mChart4.moveViewToX(data_G4.getXValCount() - 5);
+        }
     }
     public void UpdateHRGraph(float rawBVPval, double timestamp)
     {
+
         // region set heart rate Values
         LineData data_G3 = mChart3.getData();
         if (data_G3 != null)
         {
             LineDataSet set_g3 = (LineDataSet) data_G3.getDataSetByIndex(0);
-
             if(set_g3 == null)
             {
                 //creation of data set if there is no data
                 set_g3 = CreateHRset();
                 data_G3.addDataSet(set_g3);
             }
-
             //add xvalue
             if(hrData <=59)
             {
@@ -505,7 +587,6 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
 //                    Toast.makeText(getApplicationContext(), "HR is currently being Calculated", Toast.LENGTH_LONG).show();
 //                    ToastNow = false;
                 }
-
             }
             else {
                 data_G3.addXValue("");
@@ -517,7 +598,6 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
             mChart3.setVisibleXRange(1,100);
             //keep scrolling in the x to the latest entry // why 5 though....
             mChart3.moveViewToX(data_G3.getXValCount()-5);
-
         }
         //endregion
 
@@ -548,7 +628,6 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         else
         {
             ToastNow = false;
-
         }
     }
 }
