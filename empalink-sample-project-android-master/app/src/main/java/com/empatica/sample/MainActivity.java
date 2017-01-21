@@ -6,8 +6,12 @@ import android.bluetooth.BluetoothDevice;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.RelativeLayout;
 import android.widget.TabHost;
@@ -29,6 +33,13 @@ import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.utils.ColorTemplate;
+
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Workbook;
+
+import java.io.File;
+import java.io.*;
+
 
 
 public class MainActivity extends AppCompatActivity implements EmpaDataDelegate, EmpaStatusDelegate, TabHost.OnTabChangeListener {
@@ -69,6 +80,8 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
     private float bvp_total = 0;
     private float bvp_filtered = 0;
     private float[] filtered_array;
+    public String[] session_list;
+    public Workbook wb = new HSSFWorkbook();
 
 
 
@@ -310,6 +323,32 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         deviceManager.cleanUp();
     }
 
+
+    public void saveSession(int n) throws IOException{
+        if (n==0) {
+
+            String folder_main = "CheckUp";
+
+            File dir = new File(Environment.getExternalStorageDirectory(), folder_main);
+
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            if (dir.list().length != 0){
+                File myFile = new File(dir, "Session" + String.valueOf(dir.list().length+1)+".xls");
+                FileOutputStream fileOut = new FileOutputStream(myFile);
+                wb.write(fileOut);
+                fileOut.close();
+            }else{
+                File myFile = new File(dir, "Session1.xls");
+                FileOutputStream fileOut = new FileOutputStream(myFile);
+                wb.write(fileOut);
+                fileOut.close();
+            }
+
+        }
+    }
     @Override
     public void didDiscoverDevice(BluetoothDevice bluetoothDevice, String deviceName, int rssi, boolean allowed) {
         // Check if the discovered device can be used with your API key. If allowed is always false,
@@ -364,6 +403,14 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         // The device manager has established a connection
         } else if (status == EmpaStatus.CONNECTED) {
             // Stop streaming after STREAMING_TIME
+            Log.d("tag","save");
+            try{
+                saveSession(0);
+            }catch (IOException ex){
+                return;
+            }
+
+            Log.d("tag","session");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -377,11 +424,14 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
                     }, STREAMING_TIME);
                 }
             });
+
         // The device manager disconnected from a device
         } else if (status == EmpaStatus.DISCONNECTED) {
             updateLabel(deviceNameLabel, "");
         }
     }
+
+
 
     @Override
     public void didReceiveAcceleration(int x, int y, int z, double timestamp) {
@@ -630,4 +680,35 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
             ToastNow = false;
         }
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.past_sessions) {
+            startActivity (new Intent (this, PastSessions.class));
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
 }
