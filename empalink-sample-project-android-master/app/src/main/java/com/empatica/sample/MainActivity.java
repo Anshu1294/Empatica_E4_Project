@@ -254,8 +254,8 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         YAxis y1_G4 = mChart4.getAxisLeft();
         y1_G4.setTextColor(Color.BLACK);
         y1_G4.setDrawGridLines(true);
-        y1_G4.setAxisMaxValue(10);
-        y1_G4.setAxisMinValue(-10);
+        y1_G4.setAxisMaxValue(2);
+        y1_G4.setAxisMinValue(0);
 
         YAxis y1_2_G4 = mChart4.getAxisRight();
         y1_2_G4.setEnabled(false);
