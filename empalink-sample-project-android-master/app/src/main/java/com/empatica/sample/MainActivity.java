@@ -68,10 +68,12 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
     private RelativeLayout LayOutGraph_BVP;
     private RelativeLayout LayoutGraph_HR;
     private RelativeLayout LayoutGraph_IBI;
+    private RelativeLayout LayOutGraph_BVP_Raw;
     private LineChart mChart1;
     private LineChart mChart2;
     private LineChart mChart3;
     private LineChart mChart4;
+    private LineChart mChart5;
     private float ibiData=0;
     private float hrData =0;
     private boolean ToastNow = false;
@@ -82,7 +84,6 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
     private float[] filtered_array;
     public String[] session_list;
     public Workbook wb = new HSSFWorkbook();
-
 
 
 
@@ -99,7 +100,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         accel_xLabel = (TextView) findViewById(R.id.accel_x);
         accel_yLabel = (TextView) findViewById(R.id.accel_y);
         accel_zLabel = (TextView) findViewById(R.id.accel_z);
-        //bvpLabel = (TextView) findViewById(R.id.bvp);
+        bvpLabel = (TextView) findViewById(R.id.bvp);
         bvpfilter = (TextView) findViewById(R.id.bvpfiltered);
         edaLabel = (TextView) findViewById(R.id.eda);
         ibiLabel = (TextView) findViewById(R.id.ibi);
@@ -112,16 +113,20 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         LayOutGraph_EDA = (RelativeLayout) findViewById(R.id.GraphLayout_EDA);
         LayoutGraph_HR = (RelativeLayout) findViewById(R.id.GraphLayout_HeartRate);
         LayoutGraph_IBI = (RelativeLayout) findViewById(R.id.GraphLayout_IBI);
+        LayOutGraph_BVP_Raw = (RelativeLayout) findViewById(R.id.GraphLayout_BVP_Raw);
 
         mChart1 = new LineChart(this);
         mChart2 = new LineChart(this);
         mChart3 = new LineChart(this);
         mChart4 = new LineChart(this);
+        mChart5 = new LineChart(this);
+
 
         mChart1.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
         mChart2.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
         mChart3.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
         mChart4.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
+        mChart5.setLayoutParams(new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.MATCH_PARENT));
         //endregion
 
         //region Setup Graph - mChart1 (BVP)
@@ -273,6 +278,43 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         YAxis y1_2_G4 = mChart4.getAxisRight();
         y1_2_G4.setEnabled(false);
         //endregion
+        //region Setup Graph - mChart5 (BVP_RAW)
+        LayOutGraph_BVP_Raw.addView(mChart5);
+        mChart5.setDescription("BVP Raw Chart");
+        mChart5.setNoDataTextDescription("No Calculations at the moment");
+        mChart5.setHighlightPerTapEnabled(true);
+        mChart5.setTouchEnabled(true);
+        mChart5.setDragEnabled(true);
+        mChart5.setScaleEnabled(true);
+        mChart5.setDrawGridBackground(true);
+
+        //enable pinch zoom to avoid scaling axis
+        mChart5.setPinchZoom(true);
+        //colour background
+        mChart5.setBackgroundColor(Color.GRAY);
+
+        LineData data_G5 = new LineData();
+        data_G5.setValueTextColor(Color.WHITE);
+        mChart5.setData(data_G5);
+
+        Legend L1_G5 = mChart5.getLegend();
+        L1_G5.setForm(Legend.LegendForm.LINE);
+        L1_G5.setTextColor(Color.BLACK);
+
+        XAxis x1_G5 = mChart5.getXAxis();
+        x1_G5.setTextColor(Color.BLACK);
+        x1_G5.setDrawGridLines(true);
+        x1_G5.setAvoidFirstLastClipping(true);
+
+        YAxis y1_G5 = mChart5.getAxisLeft();
+        y1_G5.setTextColor(Color.BLACK);
+        y1_G5.setDrawGridLines(true);
+        y1_G5.setAxisMaxValue(80);
+        y1_G5.setAxisMinValue(-50);
+
+        YAxis y1_2_G5 = mChart5.getAxisRight();
+        y1_2_G5.setEnabled(false);
+        //endregion
 
         //region Initialize Tabs
         tabHost.setup();
@@ -281,9 +323,14 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         tabSpec.setIndicator("Data");
         tabHost.addTab(tabSpec);
 
-        tabSpec = tabHost.newTabSpec("BVP Graph");
+        tabSpec = tabHost.newTabSpec("BVP Raw");
+        tabSpec.setContent(R.id.tabBVPRaw);
+        tabSpec.setIndicator("BVP Raw");
+        tabHost.addTab(tabSpec);
+
+        tabSpec = tabHost.newTabSpec("BVP Filtered");
         tabSpec.setContent(R.id.tabGraph);
-        tabSpec.setIndicator("BVP Graph");
+        tabSpec.setIndicator("BVP Filtered");
         tabHost.addTab(tabSpec);
 
         tabSpec = tabHost.newTabSpec("EDA Graph");
@@ -442,29 +489,29 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
 
     @Override
     public void didReceiveBVP(float bvp, double timestamp) {
-        updateLabel(bvpfilter, "" + bvp);
+        updateLabel(bvpLabel, "" + bvp);
         UpdateHRGraph(bvp,timestamp);
         filteredBVP(bvp,timestamp);
 
         //region Set Chart 1 View
-        LineData data_G1 = mChart1.getData();
-        if (data_G1 != null)
+        LineData data_G5 = mChart5.getData();
+        if (data_G5 != null)
         {
-            LineDataSet set_g1 = (LineDataSet) data_G1.getDataSetByIndex(0);
+            LineDataSet set_g5 = (LineDataSet) data_G5.getDataSetByIndex(0);
 
-            if(set_g1 == null) {
+            if(set_g5 == null) {
                 // creation of data set if there is not data
-                set_g1 = CreateBVPSet();
-                data_G1.addDataSet(set_g1);
+                set_g5 = CreateBVPSet();
+                data_G5.addDataSet(set_g5);
             }
             // adding x value to the data set
-            data_G1.addXValue("");
+            data_G5.addXValue("");
             //adding new x value to the data set
-            data_G1.addEntry(new Entry(bvp,set_g1.getEntryCount()),0);
+            data_G5.addEntry(new Entry(bvp,set_g5.getEntryCount()),0);
             //notify chart data has changed
-            mChart1.notifyDataSetChanged();
-            mChart1.setVisibleXRange(1, 40);
-            mChart1.moveViewToX(data_G1.getXValCount() - 5);
+            mChart5.notifyDataSetChanged();
+            mChart5.setVisibleXRange(1, 100);
+            mChart5.moveViewToX(data_G5.getXValCount() - 5);
         }
         //endregion
     }
@@ -476,7 +523,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         } else {
             bvp_filtered = (bvp_total/10);
             //filtered_array[total_count] = bvp_filtered;
-            //updateLabel(bvpLabel, "" + bvp_filtered);
+            updateLabel(bvpfilter, "" + bvp_filtered);
             total_count ++;
             count = 0;
         }
