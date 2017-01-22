@@ -115,25 +115,25 @@
 
                         </LinearLayout>
 
-                        <!--<TextView
+                        <TextView
                             android:id="@+id/bvp_label"
                             android:layout_marginTop="10dp"
                             android:layout_below="@id/accel_area"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/bvp_label" />-->
+                            android:text="@string/bvp_label" />
 
-                        <!-- <TextView
+                        <TextView
                            android:layout_below="@id/bvp_label"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:id="@+id/bvp"
-                            android:text="@string/emptyText"/>-->
+                            android:text="@string/emptyText"/>
 
                         <TextView
                             android:id="@+id/bvpfiltered_label"
                             android:layout_marginTop="10dp"
-                            android:layout_below="@id/accel_area"
+                            android:layout_below="@id/bvp"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/bvpfiltered_label" />
@@ -223,6 +223,22 @@
                     </RelativeLayout>
 
                 </LinearLayout>
+                <LinearLayout
+                    android:id="@+id/tabBVPRaw"
+                    android:orientation="vertical"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
+
+                    <RelativeLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:id="@+id/GraphLayout_BVP_Raw"
+                        android:orientation="vertical">
+
+                    </RelativeLayout>
+
+                </LinearLayout>
+
                 <!-- EDA GRAPH-->
                 <LinearLayout
                     android:id="@+id/tabGraph2"
