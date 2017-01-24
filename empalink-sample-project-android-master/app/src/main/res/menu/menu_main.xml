@@ -13,4 +13,9 @@
         android:orderInCategory="100"
         android:title="@string/past_sessions"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/hr_calc"
+        android:orderInCategory="100"
+        android:title="@string/hr_calc"
+        app:showAsAction="never" />
 </menu>

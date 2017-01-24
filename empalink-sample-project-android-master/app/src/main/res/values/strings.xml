@@ -2,6 +2,7 @@
     <string name="app_name">CheckUp ✔</string>
     <string name="action_settings">Settings</string>
     <string name="past_sessions">Past Sessions</string>
+    <string name="hr_calc">HR Calc</string>
     <string name="accel">Accelerometers Overview</string>
     <string name="accel_x">x:</string>
     <string name="accel_y">y:</string>

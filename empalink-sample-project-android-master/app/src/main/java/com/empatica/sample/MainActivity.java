@@ -450,14 +450,12 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         // The device manager has established a connection
         } else if (status == EmpaStatus.CONNECTED) {
             // Stop streaming after STREAMING_TIME
-            Log.d("tag","save");
             try{
                 saveSession(0);
             }catch (IOException ex){
                 return;
             }
 
-            Log.d("tag","session");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -752,6 +750,14 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         //noinspection SimplifiableIfStatement
         if (id == R.id.past_sessions) {
             startActivity (new Intent (this, PastSessions.class));
+            return true;
+        }
+
+        if (id == R.id.hr_calc) {
+            Intent launchIntent = getPackageManager().getLaunchIntentForPackage("com.example.pubnubheartrate");
+            if (launchIntent != null) {
+                startActivity(launchIntent);//null pointer check in case package name was not found
+            }
             return true;
         }
 
