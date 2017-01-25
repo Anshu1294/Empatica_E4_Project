@@ -58,6 +58,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
     private TextView bvpfilter;
     private TextView edaLabel;
     private TextView ibiLabel;
+    private TextView ibifiltered;
     private TextView temperatureLabel;
     private TextView batteryLabel;
     private TextView statusLabel;
@@ -77,13 +78,15 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
     private float ibiData=0;
     private float hrData =0;
     private boolean ToastNow = false;
-    private int total_count = 0;
     private int count = 0;
+    private int ibi_counter = 0;
     private float bvp_total = 0;
     private float bvp_filtered = 0;
-    private float[] filtered_array;
+    private float[] filtered_array = new float[20];
+    private double[] filteredtimestamp_array = new double[20];
     public String[] session_list;
     public Workbook wb = new HSSFWorkbook();
+    private float calculated_ibi = 0;
 
 
 
@@ -102,6 +105,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         accel_zLabel = (TextView) findViewById(R.id.accel_z);
         bvpLabel = (TextView) findViewById(R.id.bvp);
         bvpfilter = (TextView) findViewById(R.id.bvpfiltered);
+        ibifiltered = (TextView) findViewById(R.id.ibi_filtered);
         edaLabel = (TextView) findViewById(R.id.eda);
         ibiLabel = (TextView) findViewById(R.id.ibi);
         temperatureLabel = (TextView) findViewById(R.id.temperature);
@@ -160,8 +164,8 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         YAxis y1_G1 = mChart1.getAxisLeft();
         y1_G1.setTextColor(Color.BLACK);
         y1_G1.setDrawGridLines(true);
-        y1_G1.setAxisMaxValue(80);
-        y1_G1.setAxisMinValue(-50);
+        y1_G1.setAxisMaxValue(150);
+        y1_G1.setAxisMinValue(-150);
 
         YAxis y1_2_G1 = mChart1.getAxisRight();
         y1_2_G1.setEnabled(false);
@@ -235,7 +239,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         YAxis y1_G3 = mChart3.getAxisLeft();
         y1_G3.setTextColor(Color.BLACK);
         y1_G3.setDrawGridLines(true);
-        y1_G3.setAxisMaxValue(220);
+        y1_G3.setAxisMaxValue(140);
         y1_G3.setAxisMinValue(60);
 
         YAxis y1_2_G3 = mChart3.getAxisRight();
@@ -309,8 +313,8 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
         YAxis y1_G5 = mChart5.getAxisLeft();
         y1_G5.setTextColor(Color.BLACK);
         y1_G5.setDrawGridLines(true);
-        y1_G5.setAxisMaxValue(80);
-        y1_G5.setAxisMinValue(-50);
+        y1_G5.setAxisMaxValue(120);
+        y1_G5.setAxisMinValue(-120);
 
         YAxis y1_2_G5 = mChart5.getAxisRight();
         y1_2_G5.setEnabled(false);
@@ -520,14 +524,217 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
             count+=1;
         } else {
             bvp_filtered = (bvp_total/10);
-            //filtered_array[total_count] = bvp_filtered;
+            double timestamp2 = System.currentTimeMillis() / 1000;
+            filteredIBI(bvp_filtered, timestamp2);
             updateLabel(bvpfilter, "" + bvp_filtered);
-            total_count ++;
+
+            LineData data_G1 = mChart1.getData();
+            if (data_G1 != null)
+            {
+                LineDataSet set_g1 = (LineDataSet) data_G1.getDataSetByIndex(0);
+
+                if(set_g1 == null) {
+                    // creation of data set if there is not data
+                    set_g1 = CreateBVPFilteredSet();
+                    data_G1.addDataSet(set_g1);
+                }
+                // adding x value to the data set
+                data_G1.addXValue("");
+                //adding new x value to the data set
+                data_G1.addEntry(new Entry(bvp_filtered,set_g1.getEntryCount()),0);
+                //notify chart data has changed
+                mChart1.notifyDataSetChanged();
+                mChart1.setVisibleXRange(1, 25);
+                mChart1.moveViewToX(data_G1.getXValCount() - 5);
+            }
             count = 0;
         }
     }
-        //region CreateSets
+
+    public void filteredIBI(float bvp, double timestamp) {
+        filtered_array[ibi_counter] = bvp;
+        filteredtimestamp_array[ibi_counter] = timestamp;
+        double temp_ibi = 0;
+        int indexMax1 = 0;   float max1=0;
+        int indexMax2 = 0;   float max2=0;
+        if (ibi_counter >= 19) {
+            //for case 1 and 2, where the array end maxes
+            for(int i = 0; i <=filtered_array.length-1;i++) {
+                if(filtered_array[i] > max1) {
+                    max1 = filtered_array[i];
+                    indexMax1 = i;
+                }
+            }
+            //case 1
+            if(indexMax1 == 0)
+            {
+                int visited_1 =0;
+                for(int j=1; j <= filtered_array.length-1; j++) {
+                    if(j!=filtered_array.length-1) {
+                        for(int k=1; k < filtered_array.length-2; k++){
+                            if((filtered_array[k] > filtered_array[k-1]) && (filtered_array[k] > filtered_array[k+1])) {
+                                max2 = filtered_array[k];
+                                indexMax2 = k;
+                                visited_1 ++;
+                                break;
+                            }
+                        }
+                    }
+                    if(visited_1 > 0)
+                        break;
+                    if (j == filtered_array.length-1) {
+                        visited_1 = 0;
+                        max2 = filtered_array[j];
+                        indexMax2 = j;
+                        for(int k=1; k <= filtered_array.length-2; k++)
+                        {
+                            if(filtered_array[k] > filtered_array[j]) {
+                                max2 = filtered_array[k];
+                                indexMax2 = k;
+                                visited_1 ++;
+                                break;
+                            }
+                        }
+                    }
+                    if(visited_1 == 0){
+                        break;
+                    }
+                }
+
+            }
+            //case 2
+            if(indexMax1 == (filtered_array.length-1))
+            {
+                int visited_2 = 0;
+                for(int j=0; j <= filtered_array.length-2; j++)
+                {
+                    if(j == 0) {
+                        indexMax2 = j;
+                        max2 = filtered_array[j];
+                        for(int k=1; k <= filtered_array.length-2; k++)
+                        {
+                            if(filtered_array[k] > filtered_array[j]) {
+                                max2 = filtered_array[j];
+                                indexMax2 = j;
+                                visited_2 ++;
+                                break;
+                            }
+                        }
+                    }
+                    if(visited_2 == 0)
+                        break;
+                    if(j>0)
+                    {
+                        visited_2 = 0;
+                        for(int k=1; k <= filtered_array.length-2; k++){
+                            if((filtered_array[k] > filtered_array[k-1]) && (filtered_array[k] > filtered_array[k+1])) {
+                                max2 = filtered_array[k];
+                                indexMax2 = k;
+                                visited_2 ++;
+                                break;
+                            }
+                        }
+                    }
+                    if(visited_2 > 0) {
+                        break;
+                    }
+                }
+            }
+            //case 3
+            if(indexMax1 != 0 && indexMax1 != filtered_array.length-1) {
+                int visited = 0;
+                for (int k=0; k <= filtered_array.length-1;k++) {
+                    if (k==0) {
+                        max2 = filtered_array[k];
+                        indexMax2 = k;
+                        for(int l=1; l <= filtered_array.length-1; l++)
+                        {
+                            if(filtered_array[l] > filtered_array[k]) {
+                                max2 = filtered_array[l];
+                                indexMax2 = l;
+                                visited++;
+                                break;
+                            }
+                        }
+                    }
+                    if(visited == 0)
+                        break;
+                    if(k>0)
+                    {
+                        visited = 0;
+                        for(int l=1; l < filtered_array.length-2; l++){
+                            if(l != indexMax1){
+                                if((filtered_array[l] > filtered_array[l-1]) && (filtered_array[l] > filtered_array[l+1])) {
+                                    max2 = filtered_array[l];
+                                    indexMax2 = l;
+                                    visited ++;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if(visited > 0)
+                        break;
+                    if (k==filtered_array.length-1) {
+                        visited = 0;
+                        for(int l=0; l < filtered_array.length-2; l++)
+                        {
+                            max2 = filtered_array[k];
+                            indexMax2 = k;
+                            if(filtered_array[l] > filtered_array[k]) {
+                                max2 = filtered_array[l];
+                                indexMax2 = l;
+                                visited ++;
+                                break;
+                            }
+                        }
+                    }
+                    if(visited == 0) {
+                        break;
+                    }
+
+                }
+            }
+            if (indexMax1 > indexMax2) {
+                temp_ibi = filteredtimestamp_array[indexMax1] - filteredtimestamp_array[indexMax2];
+                calculated_ibi = (float)temp_ibi;
+                /*if(calculated_ibi > 1.2 || calculated_ibi < 0.6) {
+                    double random = Math.random() * 1.1 + 0.7;
+                    calculated_ibi = (float)random;
+                }*/
+                updateLabel(ibifiltered, "" + String.format("%.2f", calculated_ibi));
+            } else {
+                temp_ibi = filteredtimestamp_array[indexMax2] - filteredtimestamp_array[indexMax1];
+                calculated_ibi = (float)temp_ibi;
+                /*if(calculated_ibi > 1.2 || calculated_ibi < 0.6) {
+                    double random = Math.random() * 1.1 + 0.7;
+                    calculated_ibi = (float)random;
+                }*/
+                updateLabel(ibifiltered, "" + String.format("%.2f", calculated_ibi));
+            }
+            ibi_counter = 0;
+        }
+        ibi_counter ++;
+    }
+    //region CreateSets
     private LineDataSet CreateBVPSet()
+    {
+        LineDataSet BVPGraph = new LineDataSet(null,"BVP Value");
+        BVPGraph.setDrawCubic(true);
+        BVPGraph.setCubicIntensity(0.2f);
+        BVPGraph.setAxisDependency(YAxis.AxisDependency.LEFT);
+        BVPGraph.setColor(ColorTemplate.getHoloBlue());
+        BVPGraph.setCircleColor(ColorTemplate.getHoloBlue());
+        BVPGraph.setLineWidth(1f);
+        BVPGraph.setFillAlpha(60);
+        BVPGraph.setFillColor(ColorTemplate.getHoloBlue());
+        BVPGraph.setHighLightColor(Color.rgb(244,177,177));
+        BVPGraph.setValueTextColor(Color.BLACK);
+        BVPGraph.setValueTextSize(7.5f);
+
+        return BVPGraph;
+    }
+    private LineDataSet CreateBVPFilteredSet()
     {
         LineDataSet BVPGraph = new LineDataSet(null,"BVP Value");
         BVPGraph.setDrawCubic(true);
@@ -620,7 +827,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
                 data_G2.addDataSet(set_g2);
             }
             // adding x value to the data set
-            data_G2.addXValue("");
+            data_G2.addXValue(String.valueOf(timestamp));
             //adding new x value to the data set
             data_G2.addEntry(new Entry(gsr,set_g2.getEntryCount()),0);
             //notify chart data has changed
@@ -648,7 +855,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
                 data_G4.addDataSet(set_g4);
             }
             // adding x value to the data set
-            data_G4.addXValue("");
+            data_G4.addXValue(String.valueOf(timestamp));
             //adding new x value to the data set
             data_G4.addEntry(new Entry(ibi,set_g4.getEntryCount()),0);
             //notify chart data has changed
@@ -674,7 +881,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
             //add xvalue
             if(hrData <=59)
             {
-                data_G3.addXValue("");
+                data_G3.addXValue(String.valueOf(timestamp));
                 data_G3.addEntry(new Entry(60, set_g3.getEntryCount()), 0);
                 tabHost = (TabHost)findViewById(R.id.tabMain);
                 if(tabHost.getCurrentTabTag() == "Heart Rate" && ToastNow == true)
@@ -684,7 +891,7 @@ public class MainActivity extends AppCompatActivity implements EmpaDataDelegate,
                 }
             }
             else {
-                data_G3.addXValue("");
+                data_G3.addXValue(String.valueOf(timestamp));
                 data_G3.addEntry(new Entry(hrData, set_g3.getEntryCount()), 0);
             }
             //notify chart has changed
